@@ -32,6 +32,7 @@ import {
 import { normalizeWhisperCaptions } from "./lib/local-whisper-result.mjs";
 import {
   remotionInvocation,
+  usesWhisperTokenTimestamps,
   whisperDirectory,
   whisperExecutableName,
 } from "../../../scripts/platform.mjs";
@@ -99,14 +100,17 @@ try {
   const wavPath = join(workDir, `${name}.wav`);
   await extractAudio(inputPath, wavPath);
   console.log(`正在使用本地 Whisper.cpp ${args.model} 模型转录……`);
+  const tokenLevelTimestamps = usesWhisperTokenTimestamps();
+  const tokensPerItem = tokenLevelTimestamps ? undefined : 128;
   const whisperCppOutput = await transcribe({
     inputPath: wavPath,
     whisperPath: WHISPER_DIR,
     whisperCppVersion: WHISPER_CPP_VERSION,
     model: args.model,
     language: args.language,
-    tokenLevelTimestamps: true,
-    // Whisper.cpp 1.5.5 accepts this as a valueless flag on Windows.
+    tokenLevelTimestamps,
+    // Windows Whisper.cpp 1.5.5 corrupts Chinese DTW tokens and timestamps.
+    tokensPerItem,
     splitOnWord: false,
     printOutput: false,
   });

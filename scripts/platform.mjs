@@ -5,6 +5,10 @@ export const isWindows = (platform = process.platform) => platform === "win32";
 export const whisperExecutableName = (platform = process.platform) =>
   isWindows(platform) ? "main.exe" : "main";
 
+// The Windows Whisper.cpp 1.5.5 binary can emit corrupt Chinese DTW tokens.
+export const usesWhisperTokenTimestamps = (platform = process.platform) =>
+  !isWindows(platform);
+
 export const whisperDirectory = (root) =>
   join(root, ".jpw-cache", "whisper.cpp");
 
