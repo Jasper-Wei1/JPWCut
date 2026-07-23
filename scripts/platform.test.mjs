@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { join } from "node:path";
 import {
   commandLocator,
   remotionInvocation,
@@ -20,10 +21,17 @@ test("Unix 使用 Make 和无扩展名 Whisper 二进制", () => {
 });
 
 test("Remotion 始终通过 Node 直接执行 CLI 入口", () => {
-  const invocation = remotionInvocation("/workspace/engine", ["ffmpeg", "-version"]);
+  const remotionDir = join("workspace", "engine");
+  const invocation = remotionInvocation(remotionDir, ["ffmpeg", "-version"]);
   assert.equal(invocation.command, process.execPath);
   assert.deepEqual(invocation.args, [
-    "/workspace/engine/node_modules/@remotion/cli/remotion-cli.js",
+    join(
+      remotionDir,
+      "node_modules",
+      "@remotion",
+      "cli",
+      "remotion-cli.js",
+    ),
     "ffmpeg",
     "-version",
   ]);
