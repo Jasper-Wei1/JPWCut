@@ -19,5 +19,5 @@ jobs:
       - run: npm run setup -- --model tiny
       - run: >-
           npm run transcribe -- --input
-          "引擎/remotion/public/demo/livestream-demo.mp4"
-          --name windows-native-smoke --model tiny
+          "引擎/remotion/public/demo/livestream-audio-smoke.mp4"
+          --name windows-native-smoke --model tiny --language en
