@@ -10,7 +10,7 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises";
-import { constants } from "node:fs";
+import { constants, createWriteStream } from "node:fs";
 import { tmpdir } from "node:os";
 import {
   basename,
@@ -21,6 +21,8 @@ import {
   resolve,
   sep,
 } from "node:path";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { fileURLToPath } from "node:url";
 import {
   installWhisperCpp,
@@ -28,6 +30,10 @@ import {
   transcribe,
 } from "@remotion/install-whisper-cpp";
 import { normalizeWhisperCaptions } from "./lib/local-whisper-result.mjs";
+import {
+  remotionInvocation,
+  whisperExecutableName,
+} from "../../../scripts/platform.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_DIR = resolve(SCRIPT_DIR, "..");
@@ -148,7 +154,10 @@ async function quarantineIncompleteWhisperInstall() {
   }
 
   try {
-    await access(join(WHISPER_DIR, "main"), constants.X_OK);
+    await access(
+      join(WHISPER_DIR, whisperExecutableName()),
+      constants.F_OK,
+    );
   } catch (error) {
     if (error.code !== "ENOENT" && error.code !== "EACCES") throw error;
     const reviewDir = join(REPO_ROOT, "工作区", "待删除");
@@ -205,19 +214,7 @@ async function downloadModel(model) {
     const url = `${base}/ggml-${model}.bin`;
     console.log(`正在从 ${url} 下载 Whisper 模型`);
     try {
-      await run("curl", [
-        "-L",
-        "--fail",
-        "--retry",
-        "3",
-        "--connect-timeout",
-        "20",
-        "--continue-at",
-        "-",
-        "--output",
-        partialPath,
-        url,
-      ]);
+      await downloadToPartialPath(url, partialPath);
       const downloaded = await stat(partialPath);
       if (downloaded.size !== MODEL_SIZES[model]) {
         throw new Error(
@@ -235,9 +232,33 @@ async function downloadModel(model) {
   throw lastError ?? new Error("没有可用的 Whisper 模型下载地址。");
 }
 
+async function downloadToPartialPath(url, partialPath) {
+  let existingSize = 0;
+  try {
+    existingSize = (await stat(partialPath)).size;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+
+  const response = await fetch(url, {
+    headers: existingSize > 0 ? { Range: `bytes=${existingSize}-` } : {},
+  });
+  if (!response.ok || !response.body) {
+    throw new Error(`下载失败：${response.status} ${response.statusText}`);
+  }
+
+  const append = existingSize > 0 && response.status === 206;
+  if (existingSize > 0 && !append) {
+    console.warn("下载源不支持断点续传，正在重新下载模型。");
+  }
+  await pipeline(
+    Readable.fromWeb(response.body),
+    createWriteStream(partialPath, { flags: append ? "a" : "w" }),
+  );
+}
+
 async function extractAudio(input, output) {
-  const remotion = join(PROJECT_DIR, "node_modules/.bin/remotion");
-  await run(remotion, [
+  const invocation = remotionInvocation(PROJECT_DIR, [
     "ffmpeg",
     "-y",
     "-v",
@@ -253,6 +274,7 @@ async function extractAudio(input, output) {
     "pcm_s16le",
     output,
   ]);
+  await run(invocation.command, invocation.args);
 }
 
 function run(command, commandArgs) {

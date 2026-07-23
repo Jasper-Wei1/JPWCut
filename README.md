@@ -13,7 +13,7 @@
 
 ## 安装
 
-最低要求：macOS、Node.js 20+、Git、Xcode Command Line Tools。
+macOS 使用 Node.js 20+ 和 Xcode Command Line Tools：
 
 ```bash
 npm run setup
@@ -21,6 +21,8 @@ npm run doctor
 ```
 
 首次安装会下载依赖、编译本地 Whisper.cpp，并下载默认的 `small` 中文模型，约 500 MB。
+
+Windows 10/11 x64 用户使用 [Windows 快速开始](Windows/Windows快速开始.md)，双击 `Windows/install.cmd` 完成安装。Windows 使用官方 Whisper 二进制，不需要安装 Make、Xcode 或 curl。
 
 ## 制作一场直播的精彩切片
 

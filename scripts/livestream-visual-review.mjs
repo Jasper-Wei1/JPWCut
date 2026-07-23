@@ -5,11 +5,12 @@ import { access, mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { remotionCliPath, remotionInvocation } from "./platform.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "..");
 const REMOTION_DIR = join(REPO_ROOT, "引擎/remotion");
-const REMOTION_BIN = join(REMOTION_DIR, "node_modules/.bin/remotion");
+const REMOTION_CLI = remotionCliPath(REMOTION_DIR);
 const DEFAULT_BATCH = join(
   REMOTION_DIR,
   "public/workflow/livestream-visual-review-current.json",
@@ -181,7 +182,7 @@ async function persistBatch(batchPath, batch, copyConfirmed) {
 }
 
 async function renderFinalClips(outputs) {
-  await access(REMOTION_BIN, constants.X_OK);
+  await access(REMOTION_CLI, constants.R_OK);
   const outputDir = join(REPO_ROOT, "输出/最终成片");
   await mkdir(outputDir, { recursive: true });
   for (const { outputFilename } of outputs) {
@@ -196,7 +197,7 @@ async function renderFinalClips(outputs) {
   for (const { clip, outputFilename } of outputs) {
     const dataFile = `video-data/${clip.id}.json`;
     const outputPath = join(outputDir, outputFilename);
-    await runInherited(REMOTION_BIN, [
+    const invocation = remotionInvocation(REMOTION_DIR, [
       "render",
       "LivestreamClip916",
       outputPath,
@@ -206,13 +207,14 @@ async function renderFinalClips(outputs) {
       "h264",
       "--overwrite",
     ]);
+    await runInherited(invocation.command, invocation.args);
     await verifyFinalMedia(outputPath, clip.durationMs);
     console.log(`成片已验证：${toRepoPath(outputPath)}`);
   }
 }
 
 async function verifyFinalMedia(path, durationMs) {
-  const result = await runCapture(REMOTION_BIN, [
+  const invocation = remotionInvocation(REMOTION_DIR, [
     "ffprobe",
     "-v",
     "error",
@@ -222,6 +224,7 @@ async function verifyFinalMedia(path, durationMs) {
     "json",
     path,
   ]);
+  const result = await runCapture(invocation.command, invocation.args);
   const media = JSON.parse(result.stdout);
   const video = media.streams.find(({ codec_type: type }) => type === "video");
   const audio = media.streams.find(({ codec_type: type }) => type === "audio");

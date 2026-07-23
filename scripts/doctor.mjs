@@ -3,6 +3,12 @@
 import { existsSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
+import {
+  commandLocator,
+  remotionCliPath,
+  requiredPlatformTools,
+  whisperExecutableName,
+} from "./platform.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const checks = [];
@@ -11,9 +17,20 @@ const add = (name, ok, detail) => checks.push({ name, ok, detail });
 const nodeMajor = Number(process.versions.node.split(".")[0]);
 
 add("Node.js 20+", nodeMajor >= 20, process.version);
-add("Git", commandExists("git"), "用于安装 Whisper.cpp");
-add("Make", commandExists("make"), "由 Xcode 命令行工具提供");
-add("Curl", commandExists("curl"), "用于断点续传模型文件");
+add(
+  "受支持的平台",
+  process.platform !== "win32" || process.arch === "x64",
+  process.platform === "win32" ? `Windows ${process.arch}` : process.platform,
+);
+for (const tool of requiredPlatformTools()) {
+  add(
+    tool === "powershell.exe" ? "Windows PowerShell" : "Make",
+    commandExists(tool),
+    tool === "powershell.exe"
+      ? "用于安装 Windows Whisper 二进制"
+      : "用于编译本地 Whisper.cpp",
+  );
+}
 add(
   "Remotion 工程",
   existsSync(join(root, "引擎/remotion/package.json")),
@@ -21,12 +38,18 @@ add(
 );
 add(
   "项目依赖",
-  existsSync(join(root, "引擎/remotion/node_modules/.bin/remotion")),
+  existsSync(remotionCliPath(join(root, "引擎/remotion"))),
   "缺失时运行 npm run setup",
 );
 add(
   "本地 Whisper.cpp",
-  existsSync(join(root, "工作区/缓存/whisper.cpp")),
+  existsSync(
+    join(
+      root,
+      "工作区/缓存/whisper.cpp",
+      whisperExecutableName(),
+    ),
+  ),
   "由 npm run setup 安装",
 );
 add(
@@ -52,7 +75,7 @@ function fileHasSize(path, expectedSize) {
 }
 
 function commandExists(command) {
-  return spawnSync("which", [command], { stdio: "ignore" }).status === 0;
+  return spawnSync(commandLocator(), [command], { stdio: "ignore" }).status === 0;
 }
 
 if (checks.some((check) => !check.ok)) {

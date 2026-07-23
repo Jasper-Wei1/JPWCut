@@ -22,11 +22,12 @@ import {
   sep,
 } from "node:path";
 import { fileURLToPath } from "node:url";
+import { remotionCliPath, remotionInvocation } from "./platform.mjs";
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "..");
 const REMOTION_DIR = join(REPO_ROOT, "引擎/remotion");
-const REMOTION_BIN = join(REMOTION_DIR, "node_modules/.bin/remotion");
+const REMOTION_CLI = remotionCliPath(REMOTION_DIR);
 const CURRENT_PUBLIC_PLAN = join(
   REMOTION_DIR,
   "public/workflow/clip-review-current.json",
@@ -228,7 +229,7 @@ async function main() {
 
 async function prepareReview(args) {
   requireArgs(args, ["report"]);
-  await access(REMOTION_BIN, constants.X_OK);
+  await access(REMOTION_CLI, constants.R_OK);
   const reportPath = resolve(process.cwd(), args.report);
   const report = JSON.parse(await readFile(reportPath, "utf8"));
   const sourcePath = resolve(REPO_ROOT, report.sourceVideo.sourcePath);
@@ -286,7 +287,7 @@ async function updateReview(args) {
 
 async function applyReview(args) {
   requireArgs(args, ["plan", "transcript"]);
-  await access(REMOTION_BIN, constants.X_OK);
+  await access(REMOTION_CLI, constants.R_OK);
   const planPath = resolve(process.cwd(), args.plan);
   const transcriptPath = resolve(process.cwd(), args.transcript);
   const plan = JSON.parse(await readFile(planPath, "utf8"));
@@ -578,7 +579,7 @@ async function renderContinuousRange(
   sourceStartMs,
   durationMs,
 ) {
-  await runInherited(REMOTION_BIN, [
+  const invocation = remotionInvocation(REMOTION_DIR, [
     "ffmpeg",
     "-y",
     "-hide_banner",
@@ -594,6 +595,7 @@ async function renderContinuousRange(
     "0:a:0",
     ...masterEncodingArgs(outputPath),
   ]);
+  await runInherited(invocation.command, invocation.args);
 }
 
 function masterEncodingArgs(outputPath) {
@@ -623,7 +625,7 @@ function masterEncodingArgs(outputPath) {
 }
 
 async function probeMedia(inputPath) {
-  const result = await runCapture(REMOTION_BIN, [
+  const invocation = remotionInvocation(REMOTION_DIR, [
     "ffprobe",
     "-v",
     "error",
@@ -633,6 +635,7 @@ async function probeMedia(inputPath) {
     "json",
     inputPath,
   ]);
+  const result = await runCapture(invocation.command, invocation.args);
   const parsed = JSON.parse(result.stdout);
   const video = parsed.streams.find(({ codec_type: type }) => type === "video");
   const audio = parsed.streams.find(({ codec_type: type }) => type === "audio");
@@ -680,7 +683,9 @@ async function linkOrCopy(source, destination, force) {
   try {
     await link(source, destination);
   } catch (error) {
-    if (!["EXDEV", "EPERM"].includes(error.code)) throw error;
+    if (!["EXDEV", "EPERM", "EACCES", "EINVAL"].includes(error.code)) {
+      throw error;
+    }
     await copyFile(source, destination);
   }
 }

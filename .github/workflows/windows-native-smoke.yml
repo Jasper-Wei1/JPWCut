@@ -1,0 +1,21 @@
+name: Windows native smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  transcribe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: 引擎/remotion/package-lock.json
+      - run: npm ci --prefix 引擎/remotion
+      - run: npm run setup -- --model tiny
+      - run: >-
+          npm run transcribe -- --input
+          "引擎/remotion/public/demo/livestream-demo.mp4"
+          --name windows-native-smoke --model tiny
