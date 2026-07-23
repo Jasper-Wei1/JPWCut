@@ -2,6 +2,8 @@ name: Windows native smoke
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   transcribe:
