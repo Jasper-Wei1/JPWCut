@@ -32,6 +32,7 @@ import {
 import { normalizeWhisperCaptions } from "./lib/local-whisper-result.mjs";
 import {
   remotionInvocation,
+  whisperDirectory,
   whisperExecutableName,
 } from "../../../scripts/platform.mjs";
 
@@ -39,7 +40,7 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const PROJECT_DIR = resolve(SCRIPT_DIR, "..");
 const REPO_ROOT = resolve(PROJECT_DIR, "../..");
 const DEFAULT_OUTPUT_DIR = join(REPO_ROOT, "工作区/数据/草稿");
-const WHISPER_DIR = join(REPO_ROOT, "工作区/缓存/whisper.cpp");
+const WHISPER_DIR = whisperDirectory(REPO_ROOT);
 const WHISPER_CPP_VERSION = "1.5.5";
 const AVAILABLE_MODELS = new Set([
   "tiny",
@@ -105,7 +106,8 @@ try {
     model: args.model,
     language: args.language,
     tokenLevelTimestamps: true,
-    splitOnWord: true,
+    // Whisper.cpp 1.5.5 accepts this as a valueless flag on Windows.
+    splitOnWord: false,
     printOutput: false,
   });
   const { captions } = toCaptions({ whisperCppOutput });

@@ -7,10 +7,12 @@ import {
   commandLocator,
   remotionCliPath,
   requiredPlatformTools,
+  whisperDirectory,
   whisperExecutableName,
 } from "./platform.mjs";
 
 const root = resolve(import.meta.dirname, "..");
+const whisperDir = whisperDirectory(root);
 const checks = [];
 
 const add = (name, ok, detail) => checks.push({ name, ok, detail });
@@ -22,6 +24,13 @@ add(
   process.platform !== "win32" || process.arch === "x64",
   process.platform === "win32" ? `Windows ${process.arch}` : process.platform,
 );
+if (process.platform === "win32") {
+  add(
+    "Windows 仓库路径",
+    /^[\x00-\x7F]*$/u.test(root),
+    "请将仓库放在只含英文字母、数字和常见符号的路径，例如 D:\\JPWClips",
+  );
+}
 for (const tool of requiredPlatformTools()) {
   add(
     tool === "powershell.exe" ? "Windows PowerShell" : "Make",
@@ -43,21 +52,12 @@ add(
 );
 add(
   "本地 Whisper.cpp",
-  existsSync(
-    join(
-      root,
-      "工作区/缓存/whisper.cpp",
-      whisperExecutableName(),
-    ),
-  ),
+  existsSync(join(whisperDir, whisperExecutableName())),
   "由 npm run setup 安装",
 );
 add(
   "Whisper small 模型",
-  fileHasSize(
-    join(root, "工作区/缓存/whisper.cpp/ggml-small.bin"),
-    487601967,
-  ),
+  fileHasSize(join(whisperDir, "ggml-small.bin"), 487601967),
   "约 488 MB",
 );
 add(

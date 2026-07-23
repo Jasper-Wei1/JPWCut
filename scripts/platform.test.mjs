@@ -5,6 +5,7 @@ import {
   commandLocator,
   remotionInvocation,
   requiredPlatformTools,
+  whisperDirectory,
   whisperExecutableName,
 } from "./platform.mjs";
 
@@ -18,6 +19,14 @@ test("Unix 使用 Make 和无扩展名 Whisper 二进制", () => {
   assert.equal(whisperExecutableName("darwin"), "main");
   assert.deepEqual(requiredPlatformTools("linux"), ["make"]);
   assert.equal(commandLocator("linux"), "which");
+});
+
+test("Whisper 缓存位于仓库内的 ASCII 技术缓存目录", () => {
+  const root = join("workspace", "project");
+  assert.equal(
+    whisperDirectory(root),
+    join(root, ".jpw-cache", "whisper.cpp"),
+  );
 });
 
 test("Remotion 始终通过 Node 直接执行 CLI 入口", () => {

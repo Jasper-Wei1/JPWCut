@@ -5,6 +5,9 @@ export const isWindows = (platform = process.platform) => platform === "win32";
 export const whisperExecutableName = (platform = process.platform) =>
   isWindows(platform) ? "main.exe" : "main";
 
+export const whisperDirectory = (root) =>
+  join(root, ".jpw-cache", "whisper.cpp");
+
 export const remotionCliPath = (remotionDir) =>
   join(remotionDir, "node_modules", "@remotion", "cli", "remotion-cli.js");
 

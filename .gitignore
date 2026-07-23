@@ -13,6 +13,7 @@
 !引擎/remotion/public/workflow/clip-review-hook-demo.json
 !引擎/remotion/public/workflow/livestream-visual-review-demo.json
 
+.jpw-cache/
 工作区/缓存/
 工作区/派生媒体/*
 工作区/数据/草稿/*

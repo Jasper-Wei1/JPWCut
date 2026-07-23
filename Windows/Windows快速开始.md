@@ -5,7 +5,7 @@
 ## 准备
 
 1. 安装 Node.js 20 LTS 或更新版本：[nodejs.org](https://nodejs.org/)。安装后关闭并重新打开资源管理器。
-2. 下载仓库 ZIP 并解压，或用 Git 克隆。推荐使用短路径，例如 `D:\JPWClips`；不要放进 OneDrive、桌面或包含很深层目录的位置。
+2. 下载仓库 ZIP 并解压，或用 Git 克隆。推荐使用只含英文、数字和常见符号的短路径，例如 `D:\JPWClips`；不要放进 OneDrive、桌面、含中文用户名的路径或包含很深层目录的位置。
 3. 双击 `Windows/install.cmd`。首次安装会下载依赖、本地 Whisper.cpp 和约 500 MB 的 `small` 模型，过程需要网络。
 
 安装完成后，`npm run doctor` 的每一项都应显示“正常”。
@@ -25,11 +25,11 @@
 
 原始录像、逐字稿、缓存和最终成片全部保留在本机。切片候选、切点、视觉和最终标题仍需分别由你确认。
 
-维护者会在每次变更时运行 Windows 模板渲染检查；发布前还会手动触发 Windows 原生转录冒烟检查，验证 Whisper 二进制、模型下载和实际转录。
+维护者会在每次变更时自动运行 Windows 模板渲染与原生转录冒烟检查，验证 Whisper 二进制、模型下载和实际转录。
 
 ## 常见问题
 
 - **提示找不到 Node.js**：安装 Node.js 20 LTS 后重新打开资源管理器，再双击 `install.cmd`。
 - **安装被安全软件拦截**：允许 Node.js 和 PowerShell 完成本地 Whisper 安装；不要关闭实时防护后忘记恢复。
-- **路径或文件名异常**：将仓库移到 `D:\JPWClips`，并避免用 Windows 不支持的文件名字符。
+- **路径或文件名异常**：将仓库移到 `D:\JPWClips`，并避免中文路径和 Windows 不支持的文件名字符。
 - **Studio 无法启动**：先重新运行 `Windows/install.cmd`，再查看 `npm run doctor` 的输出。
