@@ -1,0 +1,4 @@
+interface:
+  display_name: "小红书标题公式"
+  short_description: "用可追溯公式为直播切片生成并确认内容标题"
+  default_prompt: "Use $dbs-xhs-title to match proven title formulas to each approved livestream clip."

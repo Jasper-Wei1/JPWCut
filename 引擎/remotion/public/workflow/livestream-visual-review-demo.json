@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "livestream-visual-review-demo",
+  "clips": [
+    {
+      "schemaVersion": 1,
+      "id": "livestream-clip-demo",
+      "template": "livestream-clip-916",
+      "durationMs": 32000,
+      "masterVideo": {
+        "sourcePath": "引擎/remotion/public/demo/livestream-demo.mp4",
+        "asset": "demo/livestream-demo.mp4"
+      },
+      "masterTranscript": {
+        "sourcePath": "引擎/remotion/public/demo/livestream-demo-transcript.json",
+        "asset": "demo/livestream-demo-transcript.json"
+      },
+      "output": {
+        "width": 1080,
+        "height": 1920,
+        "fps": 30,
+        "platforms": ["douyin", "xiaohongshu"]
+      },
+      "presentation": {
+        "objectFit": "cover",
+        "objectPosition": "center center",
+        "canvas": "#000000",
+        "text": "#ffffff"
+      },
+      "captions": {
+        "maxCharsPerPage": 16,
+        "areaHeight": 520,
+        "bottomPadding": 320
+      },
+      "audioPolicy": {
+        "scope": "locked-master",
+        "masterAudioOnly": true,
+        "changeMasterDuration": false,
+        "reorderSpeech": false
+      },
+      "timelinePolicy": {
+        "sourceRangeContinuous": true
+      },
+      "qa": {
+        "masterTimelineLocked": true,
+        "cropToFill": true,
+        "privacyMaskRequired": false,
+        "assetPathsChecked": true,
+        "stillRendered": false,
+        "previewMethod": "studio",
+        "previewApproved": false,
+        "readyToRender": false
+      }
+    }
+  ]
+}

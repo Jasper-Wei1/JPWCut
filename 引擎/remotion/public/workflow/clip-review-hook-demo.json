@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "workflow": "clip-extraction-review",
+  "id": "continuous-range-demo",
+  "createdAt": "2026-07-18T00:00:00.000Z",
+  "sourceVideo": {
+    "sourcePath": "引擎/remotion/public/demo/livestream-demo.mp4",
+    "asset": "demo/livestream-demo.mp4",
+    "fingerprint": {
+      "size": 0,
+      "mtimeMs": 0
+    }
+  },
+  "sourceDurationMs": 32000,
+  "sourceMedia": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "hasAudio": true
+  },
+  "preview": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "durationMs": 32000,
+    "method": "studio",
+    "status": "pending",
+    "approvedAt": null
+  },
+  "candidates": [
+    {
+      "id": "clip-001",
+      "title": "固定模板以后，视频不必从零开始",
+      "corePoint": "视频生产的主要浪费来自重复修改，而不是模型速度。",
+      "sourceStartMs": 0,
+      "sourceEndMs": 32000,
+      "durationMs": 32000,
+      "timelineStartMs": 0,
+      "timelineEndMs": 32000,
+      "totalScore": 92,
+      "reviewStatus": "pending",
+      "boundaryNote": null
+    }
+  ]
+}

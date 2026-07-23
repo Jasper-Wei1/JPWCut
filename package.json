@@ -1,0 +1,19 @@
+{
+  "name": "jpw-livestream-clips",
+  "version": "1.0.0",
+  "private": true,
+  "description": "本地直播精彩切片工作流，使用 Codex、Whisper.cpp 和 Remotion。",
+  "scripts": {
+    "setup": "npm --prefix 引擎/remotion install && node 引擎/remotion/scripts/transcribe-local.mjs --install-only",
+    "doctor": "node scripts/doctor.mjs",
+    "transcribe": "node 引擎/remotion/scripts/transcribe-local.mjs",
+    "clips:candidates": "node scripts/build-livestream-candidate-report.mjs",
+    "clips:review": "node scripts/livestream-clip-review.mjs",
+    "clips:video-data": "node scripts/build-livestream-video-data.mjs",
+    "clips:visual-review": "node scripts/livestream-visual-review.mjs",
+    "test:clips": "node --test scripts/build-livestream-candidate-report.test.mjs scripts/livestream-clip-review.test.mjs scripts/build-livestream-video-data.test.mjs scripts/livestream-visual-review.test.mjs",
+    "studio": "npm --prefix 引擎/remotion run video:studio",
+    "gallery": "node scripts/render-template-gallery.mjs",
+    "check": "npm --prefix 引擎/remotion run check"
+  }
+}

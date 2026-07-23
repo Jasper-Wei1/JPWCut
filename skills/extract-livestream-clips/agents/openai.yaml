@@ -1,0 +1,4 @@
+interface:
+  display_name: "直播精彩切片"
+  short_description: "从本地直播录像筛选并制作可审核的竖屏精彩切片工作流"
+  default_prompt: "Use $extract-livestream-clips to select and produce approved 9:16 highlights from a local livestream recording."

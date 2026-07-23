@@ -1,0 +1,47 @@
+{
+  "name": "remotion-project",
+  "version": "1.0.0",
+  "description": "本地直播精彩切片工作流使用的 Remotion 渲染引擎",
+  "repository": {},
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@remotion/captions": "^4.0.486",
+    "@remotion/cli": "4.0.486",
+    "@remotion/install-whisper-cpp": "^4.0.486",
+    "@remotion/layout-utils": "^4.0.486",
+    "@remotion/media": "4.0.486",
+    "@remotion/tailwind-v4": "4.0.486",
+    "lucide-react": "^0.468.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.486",
+    "tailwindcss": "4.0.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@remotion/eslint-config-flat": "4.0.486",
+    "@types/react": "19.2.7",
+    "@types/web": "0.0.166",
+    "eslint": "9.19.0",
+    "prettier": "3.8.1",
+    "tsx": "^4.23.1",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "dev": "remotion studio",
+    "build": "remotion bundle",
+    "upgrade": "remotion upgrade",
+    "lint": "eslint src && tsc",
+    "video:studio": "remotion studio",
+    "whisper:install": "node scripts/transcribe-local.mjs --install-only",
+    "asr:transcribe": "node scripts/transcribe-local.mjs",
+    "asr:correct": "node scripts/apply-transcript-corrections.mjs",
+    "test:asr": "node --test scripts/local-whisper-result.test.mjs",
+    "test:templates": "node --test scripts/template-registry.test.mjs",
+    "check": "npm run test:asr && npm run test:templates && npm --prefix ../.. run test:clips && npm run lint"
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

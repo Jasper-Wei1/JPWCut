@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "templates": [
+    {
+      "id": "livestream-clip-916",
+      "name": "直播精彩切片",
+      "version": "1.2.0",
+      "workflow": "clip-extraction",
+      "compositionId": "LivestreamClip916",
+      "dataFile": "video-data/livestream-clip-demo.json",
+      "manifest": "模板/livestream-clip-916/模板说明.json",
+      "preview": "模板/样式画廊/livestream-clip-916.png",
+      "previewFrame": 180,
+      "status": "stable"
+    }
+  ]
+}

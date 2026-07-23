@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "livestream-clip-916",
+  "name": "直播精彩切片",
+  "version": "1.2.0",
+  "compositionId": "LivestreamClip916",
+  "aspectRatio": "9:16",
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "useWhen": [
+    "直播原片已确认一个连续高光区间",
+    "已确认连续源区间，并生成锁定时长的独立派生母版",
+    "需要将原画面居中裁切为 9:16，保留原弹幕并叠加新字幕"
+  ],
+  "requiredInputs": [
+    "approvedClipMaster",
+    "reviewedTranscript",
+    "timelinePolicy"
+  ],
+  "optionalInputs": [],
+  "forbiddenInputs": [
+    "candidateTitle",
+    "candidateStatus",
+    "candidateScore",
+    "sourceTimecode",
+    "contentTitle",
+    "discontinuousSourceRanges",
+    "privacyMask"
+  ],
+  "exampleData": "引擎/remotion/public/video-data/livestream-clip-demo.json",
+  "preview": "模板/样式画廊/livestream-clip-916.png",
+  "reference": "skills/extract-livestream-clips/SKILL.md"
+}
