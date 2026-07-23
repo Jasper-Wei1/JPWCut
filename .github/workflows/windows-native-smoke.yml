@@ -17,7 +17,15 @@ jobs:
           cache-dependency-path: 引擎/remotion/package-lock.json
       - run: npm ci --prefix 引擎/remotion
       - run: npm run setup -- --model tiny
-      - run: >-
-          npm run transcribe -- --input
-          "引擎/remotion/public/demo/livestream-audio-smoke.mp4"
-          --name windows-native-smoke --model tiny --language en
+      - name: Transcribe an audio-bearing fixture
+        shell: pwsh
+        run: |
+          $logPath = Join-Path $env:RUNNER_TEMP "windows-native-smoke.log"
+          npm run transcribe -- --input "引擎/remotion/public/demo/livestream-audio-smoke.mp4" --name windows-native-smoke --model tiny --language en 2>&1 |
+            Tee-Object -FilePath $logPath
+          $exitCode = $LASTEXITCODE
+          if ($exitCode -ne 0) {
+            $detail = (Get-Content -Path $logPath -Raw).Replace("%", "%25").Replace("`r", "%0D").Replace("`n", "%0A")
+            Write-Host "::error title=Windows native Whisper smoke::$detail"
+            exit $exitCode
+          }
