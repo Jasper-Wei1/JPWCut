@@ -24,6 +24,8 @@ npm run doctor
 
 Windows 10/11 x64 用户使用 [Windows 快速开始](Windows/Windows快速开始.md)，双击 `Windows/install.cmd` 完成安装。Windows 使用官方 Whisper 二进制，不需要安装 Make、Xcode 或 curl。
 
+面向客户交付时，请从 [最新 Release](https://github.com/Jasper-Wei1/JPW-Live-Cut/releases/latest) 下载 `Source code (zip)`，解压到 `D:\JPWClips` 这类短英文路径，避免 OneDrive、桌面、中文用户名路径和过深目录。安装完成后运行 `npm run doctor`；Windows 在整片转录前会自动检查原片开头、中段和结尾各 30 秒，任一检查不合格时不会启动整片转录。
+
 ## 制作一场直播的精彩切片
 
 把一段录像放进 `输入/媒体素材/直播录像/`，然后对 Agent 说：
