@@ -59,3 +59,39 @@ test("将接近源音频结尾的字幕裁切到有效时长", () => {
     /超出源音频允许范围/u,
   );
 });
+
+test("在校验时间码前忽略 Whisper 的静音占位符", () => {
+  const result = normalizeWhisperCaptions({
+    captions: [
+      { text: "有效字幕", startMs: 0, endMs: 1000 },
+      { text: " [BLANK_AUDIO]", startMs: 22400, endMs: 32400 },
+    ],
+    model: "tiny",
+    source: "sample.wav",
+    whisperCppVersion: "1.5.5",
+    maxEndMs: 30000,
+  });
+
+  assert.deepEqual(result.captions, [
+    {
+      text: "有效字幕",
+      startMs: 0,
+      endMs: 1000,
+      timestampMs: null,
+      confidence: null,
+    },
+  ]);
+});
+
+test("预检允许没有真实字幕的静音样本", () => {
+  const result = normalizeWhisperCaptions({
+    captions: [{ text: "[BLANK_AUDIO]", startMs: 0, endMs: 10000 }],
+    model: "tiny",
+    source: "sample.wav",
+    whisperCppVersion: "1.5.5",
+    allowEmpty: true,
+  });
+
+  assert.equal(result.durationMs, 0);
+  assert.deepEqual(result.captions, []);
+});

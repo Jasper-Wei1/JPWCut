@@ -283,21 +283,31 @@ async function runPreflight(wavPath, sourceDurationMs, args) {
   for (const range of createPreflightRanges(sourceDurationMs)) {
     const samplePath = join(
       dirname(wavPath),
-      `preflight-${range.label}.wav`,
+      `preflight-${range.fileStem}.wav`,
     );
     await extractAudioRange(samplePath, wavPath, range);
     console.log(`正在预检原片${range.label} 30 秒字幕……`);
     const { normalized } = await transcribeNormalized(
       samplePath,
-      `preflight-${range.label}`,
+      `preflight-${range.fileStem}`,
       args,
       range.durationMs,
+      { allowEmpty: true },
     );
-    assertTranscriptQuality(normalized, { sourceDurationMs: range.durationMs });
+    assertTranscriptQuality(normalized, {
+      sourceDurationMs: range.durationMs,
+      allowEmpty: true,
+    });
   }
 }
 
-async function transcribeNormalized(inputPath, source, args, maxEndMs) {
+async function transcribeNormalized(
+  inputPath,
+  source,
+  args,
+  maxEndMs,
+  { allowEmpty = false } = {},
+) {
   const tokenLevelTimestamps = usesWhisperTokenTimestamps();
   const tokensPerItem = tokenLevelTimestamps ? undefined : 128;
   const whisperCppOutput = await transcribe({
@@ -321,6 +331,7 @@ async function transcribeNormalized(inputPath, source, args, maxEndMs) {
       source,
       whisperCppVersion: WHISPER_CPP_VERSION,
       maxEndMs,
+      allowEmpty,
     }),
   };
 }
