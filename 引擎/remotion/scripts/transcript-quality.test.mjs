@@ -7,9 +7,9 @@ import {
 
 test("生成开头、中段和结尾各 30 秒的转录预检范围", () => {
   assert.deepEqual(createPreflightRanges(120000), [
-    { label: "开头", startMs: 0, durationMs: 30000 },
-    { label: "中段", startMs: 45000, durationMs: 30000 },
-    { label: "结尾", startMs: 90000, durationMs: 30000 },
+    { label: "开头", fileStem: "start", startMs: 0, durationMs: 30000 },
+    { label: "中段", fileStem: "middle", startMs: 45000, durationMs: 30000 },
+    { label: "结尾", fileStem: "end", startMs: 90000, durationMs: 30000 },
   ]);
 });
 
@@ -21,6 +21,13 @@ test("字幕预检拒绝乱码、无效时间码和超长字幕", () => {
   assert.deepEqual(assertTranscriptQuality(valid, { sourceDurationMs: 30000 }), {
     captionCount: 1,
   });
+  assert.deepEqual(
+    assertTranscriptQuality(
+      { text: "", captions: [] },
+      { sourceDurationMs: 30000, allowEmpty: true },
+    ),
+    { captionCount: 0 },
+  );
   assert.throws(
     () =>
       assertTranscriptQuality(

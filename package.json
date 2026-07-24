@@ -1,6 +1,6 @@
 {
   "name": "jpw-livestream-clips",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "本地直播精彩切片工作流，使用 Codex、Whisper.cpp 和 Remotion。",
   "scripts": {
