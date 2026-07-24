@@ -37,7 +37,7 @@
     "whisper:install": "node scripts/transcribe-local.mjs --install-only",
     "asr:transcribe": "node scripts/transcribe-local.mjs",
     "asr:correct": "node scripts/apply-transcript-corrections.mjs",
-    "test:asr": "node --test scripts/local-whisper-result.test.mjs",
+    "test:asr": "node --test scripts/local-whisper-result.test.mjs scripts/transcript-quality.test.mjs",
     "test:templates": "node --test scripts/template-registry.test.mjs",
     "check": "npm run test:asr && npm run test:templates && npm --prefix ../.. run test:clips && npm run lint"
   },

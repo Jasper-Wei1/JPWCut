@@ -35,3 +35,27 @@ test("拒绝没有时间戳字幕的 Whisper 空结果", () => {
     /没有返回带时间戳的字幕/u,
   );
 });
+
+test("将接近源音频结尾的字幕裁切到有效时长", () => {
+  const result = normalizeWhisperCaptions({
+    captions: [{ text: "最后一句", startMs: 28880, endMs: 30880 }],
+    model: "small",
+    source: "sample.wav",
+    whisperCppVersion: "1.5.5",
+    maxEndMs: 30000,
+  });
+
+  assert.equal(result.captions[0].endMs, 30000);
+  assert.equal(result.durationMs, 30000);
+  assert.throws(
+    () =>
+      normalizeWhisperCaptions({
+        captions: [{ text: "异常", startMs: 28880, endMs: 31001 }],
+        model: "small",
+        source: "sample.wav",
+        whisperCppVersion: "1.5.5",
+        maxEndMs: 30000,
+      }),
+    /超出源音频允许范围/u,
+  );
+});
