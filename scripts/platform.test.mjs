@@ -5,6 +5,7 @@ import {
   commandLocator,
   remotionInvocation,
   requiredPlatformTools,
+  usesWhisperTokenTimestamps,
   whisperDirectory,
   whisperExecutableName,
 } from "./platform.mjs";
@@ -13,12 +14,14 @@ test("Windows 使用 .exe Whisper 二进制且不要求 Make", () => {
   assert.equal(whisperExecutableName("win32"), "main.exe");
   assert.deepEqual(requiredPlatformTools("win32"), ["powershell.exe"]);
   assert.equal(commandLocator("win32"), "where.exe");
+  assert.equal(usesWhisperTokenTimestamps("win32"), false);
 });
 
 test("Unix 使用 Make 和无扩展名 Whisper 二进制", () => {
   assert.equal(whisperExecutableName("darwin"), "main");
   assert.deepEqual(requiredPlatformTools("linux"), ["make"]);
   assert.equal(commandLocator("linux"), "which");
+  assert.equal(usesWhisperTokenTimestamps("darwin"), true);
 });
 
 test("Whisper 缓存位于仓库内的 ASCII 技术缓存目录", () => {

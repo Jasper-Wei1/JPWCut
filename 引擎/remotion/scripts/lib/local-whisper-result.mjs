@@ -3,20 +3,35 @@ export function normalizeWhisperCaptions({
   model,
   source,
   whisperCppVersion,
+  maxEndMs = null,
+  maxTimestampOverflowMs = 1_000,
   createdAt = new Date().toISOString(),
 }) {
+  const sourceDurationMs = Number.isFinite(maxEndMs)
+    ? Math.round(maxEndMs)
+    : null;
   const cleaned = captions
-    .map((caption) => ({
-      text: String(caption.text ?? "").trim(),
-      startMs: Math.max(0, Math.round(Number(caption.startMs))),
-      endMs: Math.max(0, Math.round(Number(caption.endMs))),
-      timestampMs: Number.isFinite(caption.timestampMs)
-        ? Math.round(caption.timestampMs)
-        : null,
-      confidence: Number.isFinite(caption.confidence)
-        ? caption.confidence
-        : null,
-    }))
+    .map((caption) => {
+      const startMs = Math.max(0, Math.round(Number(caption.startMs)));
+      const endMs = Math.max(0, Math.round(Number(caption.endMs)));
+      if (
+        sourceDurationMs !== null &&
+        endMs > sourceDurationMs + maxTimestampOverflowMs
+      ) {
+        throw new Error("Whisper 字幕时间码超出源音频允许范围。");
+      }
+      return {
+        text: String(caption.text ?? "").trim(),
+        startMs: Math.min(startMs, sourceDurationMs ?? startMs),
+        endMs: Math.min(endMs, sourceDurationMs ?? endMs),
+        timestampMs: Number.isFinite(caption.timestampMs)
+          ? Math.round(caption.timestampMs)
+          : null,
+        confidence: Number.isFinite(caption.confidence)
+          ? caption.confidence
+          : null,
+      };
+    })
     .filter(
       (caption) =>
         caption.text &&

@@ -31,7 +31,12 @@ import {
 } from "@remotion/install-whisper-cpp";
 import { normalizeWhisperCaptions } from "./lib/local-whisper-result.mjs";
 import {
+  assertTranscriptQuality,
+  createPreflightRanges,
+} from "./lib/transcript-quality.mjs";
+import {
   remotionInvocation,
+  usesWhisperTokenTimestamps,
   whisperDirectory,
   whisperExecutableName,
 } from "../../../scripts/platform.mjs";
@@ -81,7 +86,7 @@ const outputDir = resolve(process.cwd(), args.outputDir || DEFAULT_OUTPUT_DIR);
 const rawPath = join(outputDir, `${name}-transcript.whisper.json`);
 const normalizedPath = join(outputDir, `${name}-transcript.json`);
 
-if (!args.force) {
+if (!args.force && !args.preflightOnly) {
   for (const path of [rawPath, normalizedPath]) {
     try {
       await access(path, constants.F_OK);
@@ -98,39 +103,34 @@ const workDir = await mkdtemp(join(tmpdir(), "local-whisper-"));
 try {
   const wavPath = join(workDir, `${name}.wav`);
   await extractAudio(inputPath, wavPath);
-  console.log(`正在使用本地 Whisper.cpp ${args.model} 模型转录……`);
-  const whisperCppOutput = await transcribe({
-    inputPath: wavPath,
-    whisperPath: WHISPER_DIR,
-    whisperCppVersion: WHISPER_CPP_VERSION,
-    model: args.model,
-    language: args.language,
-    tokenLevelTimestamps: true,
-    // Whisper.cpp 1.5.5 accepts this as a valueless flag on Windows.
-    splitOnWord: false,
-    printOutput: false,
-  });
-  const { captions } = toCaptions({ whisperCppOutput });
-  const normalized = normalizeWhisperCaptions({
-    captions,
-    model: args.model,
-    source: toRepoPath(inputPath),
-    whisperCppVersion: WHISPER_CPP_VERSION,
-  });
+  const sourceDurationMs = await probeAudioDuration(wavPath);
+  await runPreflight(wavPath, sourceDurationMs, args);
+  if (args.preflightOnly) {
+    console.log("转录预检已通过，未启动整片转录。");
+  } else {
+    console.log(`正在使用本地 Whisper.cpp ${args.model} 模型转录……`);
+    const { whisperCppOutput, normalized } = await transcribeNormalized(
+      wavPath,
+      toRepoPath(inputPath),
+      args,
+      sourceDurationMs,
+    );
+    assertTranscriptQuality(normalized, { sourceDurationMs });
 
-  await writeFile(
-    rawPath,
-    `${JSON.stringify(whisperCppOutput, null, 2)}\n`,
-    "utf8",
-  );
-  await writeFile(
-    normalizedPath,
-    `${JSON.stringify(normalized, null, 2)}\n`,
-    "utf8",
-  );
-  console.log(`本地原始结果：${toRepoPath(rawPath)}`);
-  console.log(`标准化逐字稿：${toRepoPath(normalizedPath)}`);
-  console.log(`时长：${normalized.durationMs} 毫秒`);
+    await writeFile(
+      rawPath,
+      `${JSON.stringify(whisperCppOutput, null, 2)}\n`,
+      "utf8",
+    );
+    await writeFile(
+      normalizedPath,
+      `${JSON.stringify(normalized, null, 2)}\n`,
+      "utf8",
+    );
+    console.log(`本地原始结果：${toRepoPath(rawPath)}`);
+    console.log(`标准化逐字稿：${toRepoPath(normalizedPath)}`);
+    console.log(`时长：${normalized.durationMs} 毫秒`);
+  }
 } finally {
   await rm(workDir, { recursive: true, force: true });
 }
@@ -279,6 +279,90 @@ async function extractAudio(input, output) {
   await run(invocation.command, invocation.args);
 }
 
+async function runPreflight(wavPath, sourceDurationMs, args) {
+  for (const range of createPreflightRanges(sourceDurationMs)) {
+    const samplePath = join(
+      dirname(wavPath),
+      `preflight-${range.label}.wav`,
+    );
+    await extractAudioRange(samplePath, wavPath, range);
+    console.log(`正在预检原片${range.label} 30 秒字幕……`);
+    const { normalized } = await transcribeNormalized(
+      samplePath,
+      `preflight-${range.label}`,
+      args,
+      range.durationMs,
+    );
+    assertTranscriptQuality(normalized, { sourceDurationMs: range.durationMs });
+  }
+}
+
+async function transcribeNormalized(inputPath, source, args, maxEndMs) {
+  const tokenLevelTimestamps = usesWhisperTokenTimestamps();
+  const tokensPerItem = tokenLevelTimestamps ? undefined : 128;
+  const whisperCppOutput = await transcribe({
+    inputPath,
+    whisperPath: WHISPER_DIR,
+    whisperCppVersion: WHISPER_CPP_VERSION,
+    model: args.model,
+    language: args.language,
+    tokenLevelTimestamps,
+    // Windows Whisper.cpp 1.5.5 corrupts Chinese DTW tokens and timestamps.
+    tokensPerItem,
+    splitOnWord: false,
+    printOutput: false,
+  });
+  const { captions } = toCaptions({ whisperCppOutput });
+  return {
+    whisperCppOutput,
+    normalized: normalizeWhisperCaptions({
+      captions,
+      model: args.model,
+      source,
+      whisperCppVersion: WHISPER_CPP_VERSION,
+      maxEndMs,
+    }),
+  };
+}
+
+async function extractAudioRange(output, input, { startMs, durationMs }) {
+  const invocation = remotionInvocation(PROJECT_DIR, [
+    "ffmpeg",
+    "-y",
+    "-v",
+    "error",
+    "-ss",
+    String(startMs / 1000),
+    "-t",
+    String(durationMs / 1000),
+    "-i",
+    input,
+    "-c:a",
+    "pcm_s16le",
+    output,
+  ]);
+  await run(invocation.command, invocation.args);
+}
+
+async function probeAudioDuration(input) {
+  const invocation = remotionInvocation(PROJECT_DIR, [
+    "ffprobe",
+    "-v",
+    "error",
+    "-show_entries",
+    "format=duration",
+    "-of",
+    "json",
+    input,
+  ]);
+  const result = await runCapture(invocation.command, invocation.args);
+  const durationMs = Math.round(Number(JSON.parse(result).format?.duration) * 1000);
+  if (!Number.isFinite(durationMs) || durationMs <= 0) {
+    throw new Error("无法确定原片时长，不能启动转录预检。");
+  }
+  return durationMs;
+}
+
 function run(command, commandArgs) {
   return new Promise((resolveRun, rejectRun) => {
     const child = spawn(command, commandArgs, {
@@ -293,6 +377,19 @@ function run(command, commandArgs) {
   });
 }
 
+function runCapture(command, commandArgs) {
+  return new Promise((resolveRun, rejectRun) => {
+    const child = spawn(command, commandArgs, { cwd: PROJECT_DIR });
+    let stdout = "";
+    child.stdout.on("data", (chunk) => (stdout += chunk));
+    child.on("error", rejectRun);
+    child.on("exit", (code) => {
+      if (code === 0) resolveRun(stdout);
+      else rejectRun(new Error(`${command} exited with code ${code}`));
+    });
+  });
+}
+
 function parseArgs(argv) {
   const parsed = {
     input: null,
@@ -301,6 +398,7 @@ function parseArgs(argv) {
     model: "small",
     language: "zh",
     installOnly: false,
+    preflightOnly: false,
     force: false,
     help: false,
   };
@@ -312,6 +410,7 @@ function parseArgs(argv) {
     else if (arg === "--model") parsed.model = argv[++index];
     else if (arg === "--language") parsed.language = argv[++index];
     else if (arg === "--install-only") parsed.installOnly = true;
+    else if (arg === "--preflight-only") parsed.preflightOnly = true;
     else if (arg === "--force") parsed.force = true;
     else if (arg === "--help" || arg === "-h") parsed.help = true;
     else throw new Error(`未知参数：${arg}`);
